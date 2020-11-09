@@ -37,9 +37,9 @@ def get_all_attempts(language):
     else:
         results = prolog_collection.find()
     for a in results:
-        b = JSONEncoder().encode(a)
-        attempts.append(b)
-    return attempts
+        attempts.append(a)
+
+    return JSONEncoder().encode({'data': attempts, 'error': None })
 
 
 def add_attempt(data, language):

@@ -7,7 +7,10 @@
 - Then activate your venv:
     - on windows: "venv\Scripts\activate"
 - Install flask within venv: "pip install Flask"
-- Set flask env: set FLASK_APP=app.py
-- You will probably be asked to add some other dependencies also
+- Set flask env: set FLASK_APP=flaskr set FLASK_ENV=development flask run
+
+OR
+- pip install -e .
+
 
 
