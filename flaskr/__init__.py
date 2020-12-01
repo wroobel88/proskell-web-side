@@ -3,7 +3,7 @@ import os
 from flask import Flask
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, mongo_conf='flaskr.settings'):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
@@ -23,7 +23,9 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-    app.config["MONGO_URI"] = 'mongodb+srv://asd:asd@cluster0.yan5i.mongodb.net/students?retryWrites=true&w=majority'
+
+    app.config.from_object(mongo_conf)
+    # app.config["MONGO_URI"] = MONGO_URI
     from .database import mongo
     mongo.init_app(app)
 
