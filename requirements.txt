@@ -5,7 +5,6 @@ colorama==0.4.4
 coverage==5.3
 dnspython==2.0.0
 Flask==1.1.2
-flask-mongoengine==1.0.0
 Flask-WTF==0.14.3
 -e git+https://github.com/wroobel88/proskell-web-side.git@3356cfdc54d5569c6fd85fa35d516576f87726cd#egg=flaskr
 importlib-metadata==3.1.0
