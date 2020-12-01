@@ -3,7 +3,7 @@ import os
 from flask import Flask
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, mongo_conf='flaskr.settings'):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
@@ -24,7 +24,10 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    from . import db
+    app.config.from_object(mongo_conf)
+    # app.config["MONGO_URI"] = MONGO_URI
+    from .database import mongo
+    mongo.init_app(app)
 
     from . import user_attempts
     app.register_blueprint(user_attempts.bp)

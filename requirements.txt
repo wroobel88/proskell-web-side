@@ -5,6 +5,7 @@ colorama==0.4.4
 coverage==5.3
 dnspython==2.0.0
 Flask==1.1.2
+Flask-PyMongo==2.3.0
 Flask-WTF==0.14.3
 -e git+https://github.com/wroobel88/proskell-web-side.git@3356cfdc54d5569c6fd85fa35d516576f87726cd#egg=flaskr
 importlib-metadata==3.1.0
@@ -21,6 +22,7 @@ py==1.9.0
 pymongo==3.11.1
 pyparsing==2.4.7
 pytest==6.1.2
+python-dotenv==0.15.0
 six==1.15.0
 toml==0.10.2
 typed-ast==1.4.1

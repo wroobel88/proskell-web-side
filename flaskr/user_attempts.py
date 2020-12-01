@@ -9,7 +9,10 @@ from bson import ObjectId
 from werkzeug.exceptions import abort
 
 
-from flaskr.db import haskell_collection, prolog_collection
+from .database import mongo
+
+haskell_collection = mongo.db.haskell
+prolog_collection = mongo.db.prolog
 
 bp = Blueprint('user_attempts', __name__)
 
@@ -50,7 +53,7 @@ def add_attempt(data, language):
         'timestamp': time.time()
     }
     if language == 'haskell':
-        res = haskell_collection.insert_one(user_request).inserted_id
+        res = mongo.haskell.insert_one(user_request).inserted_id
         added = JSONEncoder().encode(haskell_collection.find_one(res))
         return added
     else:
