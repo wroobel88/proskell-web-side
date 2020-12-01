@@ -23,8 +23,9 @@ def create_app(test_config=None):
         os.makedirs(app.instance_path)
     except OSError:
         pass
-
-    from . import db
+    app.config["MONGO_URI"] = 'mongodb+srv://asd:asd@cluster0.yan5i.mongodb.net/students?retryWrites=true&w=majority'
+    from .database import mongo
+    mongo.init_app(app)
 
     from . import user_attempts
     app.register_blueprint(user_attempts.bp)
