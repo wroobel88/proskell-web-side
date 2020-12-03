@@ -1,14 +1,9 @@
 from flask import (
     Blueprint, request, Response, json
 )
-from pprint import pprint
 import time
-from bson.json_util import loads, dumps
+from bson.json_util import loads
 from bson import ObjectId
-
-from werkzeug.exceptions import abort
-
-
 from .database import mongo
 
 haskell_collection = mongo.db.haskell
@@ -25,24 +20,21 @@ class JSONEncoder(json.JSONEncoder):
 
 
 def get_one_attempt(language):
-    if language == 'haskell':
-        a = JSONEncoder().encode(haskell_collection.find_one())
-    else:
-        a = JSONEncoder().encode(prolog_collection.find_one())
+    collection = haskell_collection if language == 'haskell' else prolog_collection
+    a = JSONEncoder().encode(collection.find_one())
 
     return a
 
 
 def get_all_attempts(language):
     attempts = []
-    if language == 'haskell':
-        results = haskell_collection.find()
-    else:
-        results = prolog_collection.find()
+    collection = haskell_collection if language == 'haskell' else prolog_collection
+    results = collection.find()
+
     for a in results:
         attempts.append(a)
 
-    return JSONEncoder().encode({'data': attempts, 'error': None })
+    return JSONEncoder().encode({'data': attempts, 'error': None})
 
 
 def add_attempt(data, language):
@@ -52,25 +44,33 @@ def add_attempt(data, language):
         'code': data['code'],
         'timestamp': time.time()
     }
-    if language == 'haskell':
-        res = mongo.haskell.insert_one(user_request).inserted_id
-        added = JSONEncoder().encode(haskell_collection.find_one(res))
-        return added
-    else:
-        return prolog_collection.insert_one(user_request)
+    collection = haskell_collection if language == 'haskell' else prolog_collection
+    res = collection.insert_one(user_request).inserted_id
+    added = JSONEncoder().encode(haskell_collection.find_one(res))
+    return added
 
 
-@bp.route('/haskell', methods=['GET', 'POST'])
-def get_attemps():
+@bp.route('/<language>', methods=['GET', 'POST'])
+def get_add_attemps(language):
     if request.method == 'GET':
-        a = get_one_attempt('haskell')
+        a = get_one_attempt(language)
         return Response(a, mimetype='application/json')
     if request.method == 'POST':
-        result = add_attempt(loads(request.data), 'haskell')
+        result = add_attempt(loads(request.data), language)
         return Response(result, mimetype='application/json')
 
 
-@bp.route('/haskell/all')
-def get_all_attemps():
-    all_items = get_all_attempts('haskell')
+@bp.route('/<language>/all')
+def get_all_attemps(language):
+    all_items = get_all_attempts(language)
     return Response(all_items, mimetype='application/json')
+
+
+@bp.route('/<language>/<key>', methods=['DELETE'])
+def delete_by_key(language, key):
+    if request.method == 'DELETE':
+        if language == 'haskell':
+            haskell_collection.delete_one({"_id": ObjectId(key)})
+        elif language == 'prolog':
+            prolog_collection.delete_one({"_id": ObjectId(key)})
+        return f'Document {key} removed.'
