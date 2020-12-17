@@ -1,6 +1,7 @@
 from flask import (
     Blueprint, request, Response, json
 )
+import requests
 import time
 from bson.json_util import loads
 from bson import ObjectId
@@ -44,9 +45,13 @@ def add_attempt(data, language):
         'code': data['code'],
         'timestamp': time.time()
     }
+    # save attempt to db
     collection = haskell_collection if language == 'haskell' else prolog_collection
     res = collection.insert_one(user_request).inserted_id
     added = JSONEncoder().encode(haskell_collection.find_one(res))
+    # send code to check
+    r = requests.post('http://localhost:2000/', json=user_request)
+
     return added
 
 
