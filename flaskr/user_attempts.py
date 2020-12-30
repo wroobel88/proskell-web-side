@@ -50,7 +50,7 @@ def add_attempt(data, language):
     res = collection.insert_one(user_request).inserted_id
     added = JSONEncoder().encode(haskell_collection.find_one(res))
     # send code to check
-    r = requests.post('http://localhost:2000/', json=user_request)
+    r = requests.get('http://localhost:4000/')
 
     return added
 
