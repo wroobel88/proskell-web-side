@@ -1,21 +1,24 @@
-# set base image (host OS)
-FROM python:3.8
+# For more information, please refer to https://aka.ms/vscode-docker-python
+FROM python:3.8-slim-buster
 
-# set the working directory in the container
-WORKDIR /code
-
-ENV VIRTUAL_ENV=/opt/venv
-RUN python -m venv /opt/venv
-ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 EXPOSE 5000
-# copy the dependencies file to the working directory
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+# Install pip requirements
 COPY requirements.txt .
+RUN python -m pip install -r requirements.txt
 
-# install dependencies
-RUN . /opt/venv/bin/activate && pip install -r requirements.txt && pip install gunicorn
+WORKDIR /app
+COPY . /app
 
-# copy the content of the local src directory to the working directory
-COPY flaskr/ .
+# Switching to a non-root user, please refer to https://aka.ms/vscode-docker-python-user-rights
+RUN useradd appuser && chown -R appuser /app
+USER appuser
 
-# command to run on container start
-CMD ["gunicorn"  , "--bind", "0.0.0.0:5000", "flaskr:create_app()"]
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "flaskr.__init__:app"]

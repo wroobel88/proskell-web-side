@@ -1,13 +1,13 @@
 import os
 
 from flask import Flask
-from flask_cors import CORS
+# from flask_cors import CORS
 
 
 def create_app(test_config=None, mongo_conf='flaskr.settings'):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    CORS(app)
+    # CORS(app)
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
@@ -26,9 +26,11 @@ def create_app(test_config=None, mongo_conf='flaskr.settings'):
     except OSError:
         pass
 
-    app.config.from_object(mongo_conf)
-    # app.config["MONGO_URI"] = MONGO_URI
+    # app.config.from_object(mongo_conf)
+    app.config["MONGO_URI"] = 'mongodb+srv://asd:asd@cluster0.yan5i.mongodb.net/students?retryWrites=true&w=majority'
     from .database import mongo
+
+    MONGO_URI = ''
     mongo.init_app(app)
 
     from . import user_attempts
