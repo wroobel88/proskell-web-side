@@ -1,5 +1,6 @@
+from socket import timeout
 from flask import (
-    Blueprint, request, Response, json
+    Blueprint, request, Response, json, jsonify
 )
 import requests
 import time
@@ -46,20 +47,30 @@ def add_attempt(data, language):
         'language': language,
         'userid': data['userid'],
         'code': data['code'],
-        'timestamp': time.time()
+        'timestamp': time.time(),
+        'timeout': 1000,
+        'tests': [
+            {"input": "input1"},
+            {"input": "input2"},
+            {"input": "input3"},
+            {"input": "input4"},
+            {"input": "input5"}
+        ]
     }
     # save attempt to db
     collection = haskell_collection if language == 'haskell' else prolog_collection
     res = collection.insert_one(user_request).inserted_id
     added = JSONEncoder().encode(haskell_collection.find_one(res))
     # send code to check
-    r = requests.get('http://localhost:4000/')
+    request_data = data
 
-    return added
+    r = requests.post('http://localhost:4000/', json=request_data)
+
+    return r
 
 
-@bp.route('/<language>', methods=['GET', 'POST'])
-@cross_origin()
+@ bp.route('/<language>', methods=['GET', 'POST'])
+@ cross_origin()
 def get_add_attemps(language):
     if request.method == 'GET':
         a = get_one_attempt(language)
@@ -68,17 +79,17 @@ def get_add_attemps(language):
         response = add_attempt(loads(request.data), language)
 
         # Enable Access-Control-Allow-Origin
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        return Response(result, mimetype='application/json')
+        # response.headers.add("Access-Control-Allow-Origin", "*")
+        return Response(response, mimetype='application/json')
 
 
-@bp.route('/<language>/all')
+@ bp.route('/<language>/all')
 def get_all_attemps(language):
     all_items = get_all_attempts(language)
     return Response(all_items, mimetype='application/json')
 
 
-@bp.route('/<language>/<key>', methods=['DELETE'])
+@ bp.route('/<language>/<key>', methods=['DELETE'])
 def delete_by_key(language, key):
     if request.method == 'DELETE':
         if language == 'haskell':
