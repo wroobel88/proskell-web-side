@@ -6,11 +6,14 @@ import time
 from bson.json_util import loads
 from bson import ObjectId
 from .database import mongo
+from flask_cors import CORS, cross_origin
 
 haskell_collection = mongo.db.haskell
 prolog_collection = mongo.db.prolog
 
 bp = Blueprint('user_attempts', __name__)
+
+CORS(bp)
 
 
 class JSONEncoder(json.JSONEncoder):
@@ -56,12 +59,16 @@ def add_attempt(data, language):
 
 
 @bp.route('/<language>', methods=['GET', 'POST'])
+@cross_origin()
 def get_add_attemps(language):
     if request.method == 'GET':
         a = get_one_attempt(language)
         return Response(a, mimetype='application/json')
     if request.method == 'POST':
-        result = add_attempt(loads(request.data), language)
+        response = add_attempt(loads(request.data), language)
+
+        # Enable Access-Control-Allow-Origin
+        response.headers.add("Access-Control-Allow-Origin", "*")
         return Response(result, mimetype='application/json')
 
 

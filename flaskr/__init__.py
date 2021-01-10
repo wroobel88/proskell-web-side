@@ -1,13 +1,13 @@
 import os
 
 from flask import Flask
-# from flask_cors import CORS
 
 
 def create_app(test_config=None, mongo_conf='flaskr.settings'):
     # create and configure the app
     app = Flask(__name__, instance_relative_config=True)
-    # CORS(app)
+
+    # cors = CORS(app, resources={r"/*": {"origins": "*"}})
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
@@ -34,6 +34,7 @@ def create_app(test_config=None, mongo_conf='flaskr.settings'):
     mongo.init_app(app)
 
     from . import user_attempts
+
     app.register_blueprint(user_attempts.bp)
     app.add_url_rule('/', endpoint='index')
 
