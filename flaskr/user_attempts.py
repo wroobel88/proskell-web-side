@@ -4,10 +4,11 @@ from flask import (
 )
 import requests
 import time
-from bson.json_util import loads
+from bson.json_util import loads, dumps
 from bson import ObjectId
 from .database import mongo
 from flask_cors import CORS, cross_origin
+
 
 haskell_collection = mongo.db.haskell
 prolog_collection = mongo.db.prolog
@@ -15,7 +16,6 @@ prolog_collection = mongo.db.prolog
 bp = Blueprint('user_attempts', __name__)
 
 CORS(bp)
-
 
 class JSONEncoder(json.JSONEncoder):
     def default(self, o):
@@ -41,6 +41,9 @@ def get_all_attempts(language):
 
     return JSONEncoder().encode({'data': attempts, 'error': None})
 
+def parse_json(data):
+    return json.loads(dumps(data))
+
 
 def add_attempt(data, language):
     user_request = {
@@ -48,7 +51,7 @@ def add_attempt(data, language):
         'userid': data['userid'],
         'code': data['code'],
         'timestamp': time.time(),
-        'timeout': 1000,
+        'timeoutMs': 1000,
         'tests': [
             {"input": "input1"},
             {"input": "input2"},
@@ -62,9 +65,9 @@ def add_attempt(data, language):
     res = collection.insert_one(user_request).inserted_id
     added = JSONEncoder().encode(haskell_collection.find_one(res))
     # send code to check
-    request_data = data
+    request_data = parse_json(user_request)
 
-    r = requests.post('http://localhost:4000/', json=request_data)
+    r = requests.post('http://proskell-runtime:4000/', json=request_data)
 
     return r
 
@@ -84,12 +87,14 @@ def get_add_attemps(language):
 
 
 @ bp.route('/<language>/all')
+@ cross_origin()
 def get_all_attemps(language):
     all_items = get_all_attempts(language)
     return Response(all_items, mimetype='application/json')
 
 
 @ bp.route('/<language>/<key>', methods=['DELETE'])
+@ cross_origin()
 def delete_by_key(language, key):
     if request.method == 'DELETE':
         if language == 'haskell':
