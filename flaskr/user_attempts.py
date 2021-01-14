@@ -13,6 +13,9 @@ from flask_cors import CORS, cross_origin
 haskell_collection = mongo.db.haskell
 prolog_collection = mongo.db.prolog
 
+haskell_tests_collection = mongo.db.haskell_tests
+
+
 bp = Blueprint('user_attempts', __name__)
 
 CORS(bp)
@@ -50,24 +53,35 @@ def add_attempt(data, language):
         'language': language,
         'userid': data['userid'],
         'code': data['code'],
-        'timestamp': time.time(),
-        'timeoutMs': 1000,
-        'tests': [
-            {"input": "input1"},
-            {"input": "input2"},
-            {"input": "input3"},
-            {"input": "input4"},
-            {"input": "input5"}
-        ]
+        'exerciseNo': data['exerciseNo'],
+        # 'timestamp': time.time(),
+        # 'timeoutMs': 1000,
+        # 'tests': [
+        #     {"input": "input1"},
+        #     {"input": "input2"},
+        #     {"input": "input3"},
+        #     {"input": "input4"},
+        #     {"input": "input5"}
+        # ]
     }
     # save attempt to db
     collection = haskell_collection if language == 'haskell' else prolog_collection
     res = collection.insert_one(user_request).inserted_id
     added = JSONEncoder().encode(haskell_collection.find_one(res))
+    
+    
+    # fetch exercise tests
+
+    tests_collection = haskell_tests_collection if language == 'haskell' else haskell_tests_collection
+    test = tests_collection.find_one({"exerciseNo": int(data['exerciseNo'])})
+    
+    user_request.update({'tests': test['tests'], 'timeoutMs': 1000, 'timestamp': time.time()})
+
     # send code to check
     request_data = parse_json(user_request)
 
-    r = requests.post('http://proskell-runtime:4000/', json=request_data)
+    # r = requests.post('http://proskell-runtime:4000/', json=request_data)
+    r = requests.post('http://localhost:4000/', json=request_data)
 
     return r
 

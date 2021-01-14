@@ -33,9 +33,12 @@ def create_app(test_config=None, mongo_conf='flaskr.settings'):
     MONGO_URI = ''
     mongo.init_app(app)
 
-    from . import user_attempts
+    from .user_attempts import bp
+    app.register_blueprint(bp)
+    # app.add_url_rule('/', endpoint='index')
 
-    app.register_blueprint(user_attempts.bp)
-    app.add_url_rule('/', endpoint='index')
+    from .tests import tests
+    app.register_blueprint(tests, url_prefix='/tests')
+    # app.add_url_rule(url_prefix ='/test', endpoint='index')
 
     return app
