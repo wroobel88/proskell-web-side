@@ -90,15 +90,17 @@ def add_attempt(data, language):
 
     # r = requests.post('http://proskell-runtime:4000/', json=request_data)
     check_result_ = requests.post('http://localhost:4000/', json=request_data)
-
     # check results
     check_result = loads(check_result_.content)
-    numer_of_tests = len(check_result['tests'])
     response = { 'data': [], 'error': None}
+    if check_result['result_status'] == 1:
+        response['error'] = 'compilation error'
+        return response
 
+    numer_of_tests = len(check_result['tests'])
     for i, test in enumerate(check_result['tests']):
         if check_result['result_status'] == 1:
-            response['error'] = 'compilation error'
+            response['error'] = 'some error'
             break
         else: 
             if check_result['result_status'] == 0:
