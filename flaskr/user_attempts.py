@@ -27,10 +27,10 @@ class JSONEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, o)
 
 
-def get_one_attempt(language):
+def get_last_attempt(language, userid, exercise_number):
     collection = haskell_collection if language == 'haskell' else prolog_collection
+    results = collection.find({'language': language, 'exerciseNo': exercise_number, 'userid': userid})
     a = JSONEncoder().encode(collection.find_one())
-
     return a
 
 
@@ -38,14 +38,31 @@ def get_all_attempts(language):
     attempts = []
     collection = haskell_collection if language == 'haskell' else prolog_collection
     results = collection.find()
-
     for a in results:
         attempts.append(a)
 
     return JSONEncoder().encode({'data': attempts, 'error': None})
 
+
 def parse_json(data):
     return json.loads(dumps(data))
+
+def normalize_white_characters(value):
+    return value.replace('\\n', '\n').replace('\\t', '\t')
+
+def compare_results(a, b):
+    if len(a) == len(b):
+        for x, y in zip(a, b):
+            if x == y:
+                continue
+            else:
+                return f'{x} does not equal {y}'
+    elif len(a) < len(b):
+        return f'Expected output is shorter than your answer'
+    else:
+        return f'Expected output is longer than your answer'
+
+
 
 
 def add_attempt(data, language):
@@ -54,15 +71,6 @@ def add_attempt(data, language):
         'userid': data['userid'],
         'code': data['code'],
         'exerciseNo': data['exerciseNo'],
-        # 'timestamp': time.time(),
-        # 'timeoutMs': 1000,
-        # 'tests': [
-        #     {"input": "input1"},
-        #     {"input": "input2"},
-        #     {"input": "input3"},
-        #     {"input": "input4"},
-        #     {"input": "input5"}
-        # ]
     }
     # save attempt to db
     collection = haskell_collection if language == 'haskell' else prolog_collection
@@ -71,34 +79,57 @@ def add_attempt(data, language):
     
     
     # fetch exercise tests
-
     tests_collection = haskell_tests_collection if language == 'haskell' else haskell_tests_collection
     test = tests_collection.find_one({"exerciseNo": int(data['exerciseNo'])})
-    
+
+    # merge user_request and tests    
     user_request.update({'tests': test['tests'], 'timeoutMs': 1000, 'timestamp': time.time()})
 
     # send code to check
     request_data = parse_json(user_request)
 
     # r = requests.post('http://proskell-runtime:4000/', json=request_data)
-    r = requests.post('http://localhost:4000/', json=request_data)
+    check_result_ = requests.post('http://localhost:4000/', json=request_data)
 
-    return r
+    # check results
+    check_result = loads(check_result_.content)
+    numer_of_tests = len(check_result['tests'])
+    response = { 'data': [], 'error': None}
+
+    for i, test in enumerate(check_result['tests']):
+        if check_result['result_status'] == 1:
+            response['error'] = 'compilation error'
+            break
+        else: 
+            if check_result['result_status'] == 0:
+                expected_result = normalize_white_characters(test['result'])
+                test_result = test['result_stdout']
+                if expected_result == test_result:
+                    response['data'].append(f'Test number {i} passed.')
+                else:
+                    comparision = compare_results(expected_result, test_result)
+                    if len(comparision) == 0:
+                        response['data'].append(f'Test number {i} passed.')
+                    else:
+                        response['data'].append(f'Test number {i} is faulty: {comparision}')
+            
+    return response
 
 
-@ bp.route('/<language>', methods=['GET', 'POST'])
+@ bp.route('/<language>', methods=['POST'])
 @ cross_origin()
-def get_add_attemps(language):
-    if request.method == 'GET':
-        a = get_one_attempt(language)
-        return Response(a, mimetype='application/json')
+def add_attemps(language):
     if request.method == 'POST':
-        response = add_attempt(loads(request.data), language)
-
-        # Enable Access-Control-Allow-Origin
-        # response.headers.add("Access-Control-Allow-Origin", "*")
+        added_attempt = add_attempt(loads(request.data), language)
+        response = JSONEncoder().encode(added_attempt)
         return Response(response, mimetype='application/json')
 
+@ bp.route('/<language>/<userid>/<exercise_number>', methods=['GET'])
+@ cross_origin()
+def get_attempts(language, userid, exercise_number):
+    if request.method == 'GET':
+        a = get_last_attempt(language, userid, exercise_number)
+        return Response(a, mimetype='application/json')
 
 @ bp.route('/<language>/all')
 @ cross_origin()
