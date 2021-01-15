@@ -83,13 +83,15 @@ def add_attempt(data, language):
     test = tests_collection.find_one({"exerciseNo": int(data['exerciseNo'])})
 
     # merge user_request and tests    
-    user_request.update({'tests': test['tests'], 'timeoutMs': 1000, 'timestamp': time.time()})
+    user_request.update({'tests': test['tests'], 'timeoutMs': 1000, 'timestamp': 1598630096})
 
     # send code to check
     request_data = parse_json(user_request)
 
-    # r = requests.post('http://proskell-runtime:4000/', json=request_data)
-    check_result_ = requests.post('http://localhost:4000/', json=request_data)
+    check_result_ = requests.post('http://proskell-runtime:4000/', json=request_data)
+    # check_result_ = requests.post('http://localhost:4000/', json=request_data)
+    print(type(check_result_))
+    print(loads(check_result_.content))
     # check results
     check_result = loads(check_result_.content)
     response = { 'data': [], 'error': None}
@@ -114,7 +116,6 @@ def add_attempt(data, language):
                         response['data'].append(f'Test number {i} passed.')
                     else:
                         response['data'].append(f'Test number {i} is faulty: {comparision}')
-            
     return response
 
 

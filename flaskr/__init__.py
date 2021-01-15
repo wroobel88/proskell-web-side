@@ -1,6 +1,9 @@
 import os
 
 from flask import Flask
+from .debugger import initialize_flask_server_debugger_if_needed
+
+initialize_flask_server_debugger_if_needed()
 
 
 def create_app(test_config=None, mongo_conf='flaskr.settings'):
