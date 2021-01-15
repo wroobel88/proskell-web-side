@@ -105,7 +105,7 @@ def add_attempt(data, language):
         else: 
             if check_result['result_status'] == 0:
                 expected_result = normalize_white_characters(test['result'])
-                test_result = test['result_stdout']
+                test_result = test['result_stdout'].rstrip('\n')
                 if expected_result == test_result:
                     response['data'].append(f'Test number {i} passed.')
                 else:
