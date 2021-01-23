@@ -10,6 +10,8 @@ from .database import mongo
 from flask_cors import CORS, cross_origin
 
 haskell_tests_collection = mongo.db.haskell_tests
+prolog_tests_collection = mongo.db.prolog_tests
+
 tests = Blueprint('tests', __name__, url_prefix ='/tests')
 
 CORS(tests)
@@ -26,7 +28,7 @@ def parse_json(data):
 
 
 def get_one_test(language, exercise_number):
-    collection = haskell_tests_collection if language == 'haskell' else haskell_tests_collection
+    collection = haskell_tests_collection if language == 'haskell' else prolog_tests_collection
     test = collection.find_one({"exerciseNo": int(exercise_number)} )
     a = JSONEncoder().encode(test)
     return a
@@ -40,9 +42,9 @@ def add_test(data):
     }
     language = data['language']
     # save test to db
-    collection = haskell_tests_collection if language == 'haskell' else haskell_tests_collection
+    collection = haskell_tests_collection if language == 'haskell' else prolog_tests_collection
     res = collection.insert_one(test).inserted_id
-    added = JSONEncoder().encode(haskell_tests_collection.find_one(res))
+    added = JSONEncoder().encode(collection.find_one(res))
     return added
 
 @ tests.route('/<language>/<exercise_number>', methods=['GET', 'POST'])

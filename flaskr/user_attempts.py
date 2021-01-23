@@ -14,7 +14,7 @@ haskell_collection = mongo.db.haskell
 prolog_collection = mongo.db.prolog
 
 haskell_tests_collection = mongo.db.haskell_tests
-
+prolog_tests_collection = mongo.db.prolog_tests
 
 bp = Blueprint('user_attempts', __name__)
 
@@ -75,11 +75,11 @@ def add_attempt(data, language):
     # save attempt to db
     collection = haskell_collection if language == 'haskell' else prolog_collection
     res = collection.insert_one(user_request).inserted_id
-    added = JSONEncoder().encode(haskell_collection.find_one(res))
+    added = JSONEncoder().encode(collection.find_one(res))
     
     
     # fetch exercise tests
-    tests_collection = haskell_tests_collection if language == 'haskell' else haskell_tests_collection
+    tests_collection = haskell_tests_collection if language == 'haskell' else prolog_tests_collection
     test = tests_collection.find_one({"exerciseNo": int(data['exerciseNo'])})
 
     # merge user_request and tests    
