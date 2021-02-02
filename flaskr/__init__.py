@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 from .debugger import initialize_flask_server_debugger_if_needed
+from pymongo.errors import ConnectionFailure
 
 initialize_flask_server_debugger_if_needed()
 
@@ -34,7 +35,14 @@ def create_app(test_config=None, mongo_conf='flaskr.settings'):
     from .database import mongo
 
     MONGO_URI = ''
-    mongo.init_app(app)
+    mongo.init_app(app, serverSelectionTimeoutMS=2000)
+
+    try:
+        # The ismaster command is cheap and does not require auth.
+        mongo.db.command('ismaster')
+    except ConnectionFailure:
+        print("DB not available")
+        return
 
     from .user_attempts import bp
     app.register_blueprint(bp)
